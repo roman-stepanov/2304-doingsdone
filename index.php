@@ -10,10 +10,11 @@ $task_deadline_ts = strtotime("+" . $days . " day midnight"); // метка вр
 $current_ts = strtotime('now midnight'); // текущая метка времени
 
 // запишите сюда дату выполнения задачи в формате дд.мм.гггг
-$date_deadline = null;
+$date_deadline = date("d.m.Y", $task_deadline_ts);
 
+$seconds_per_day = 86400;
 // в эту переменную запишите кол-во дней до даты задачи
-$days_until_deadline = null;
+$days_until_deadline = ($task_deadline_ts - $current_ts) / $seconds_per_day;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -145,7 +146,7 @@ $days_until_deadline = null;
                     </tr>
                     <?php endif; ?>
 
-                    <tr class="tasks__item task">
+                    <tr class="tasks__item task <?php if ($days_until_deadline <= 0) echo 'task--important'; ?>">
                         <td class="task__select">
                             <label class="checkbox task__checkbox">
                                 <input class="checkbox__input visually-hidden" type="checkbox">
@@ -154,7 +155,7 @@ $days_until_deadline = null;
                         </td>
 
                         <td class="task__date">
-                            <!--выведите здесь дату выполнения задачи-->
+                            <?php echo $date_deadline; ?>
                         </td>
 
                         <td class="task__controls">
