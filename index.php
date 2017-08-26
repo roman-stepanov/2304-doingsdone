@@ -15,6 +15,46 @@ $date_deadline = date("d.m.Y", $task_deadline_ts);
 $seconds_per_day = 86400;
 // в эту переменную запишите кол-во дней до даты задачи
 $days_until_deadline = ($task_deadline_ts - $current_ts) / $seconds_per_day;
+
+$projects = ['Все', 'Входящие', 'Учеба', 'Работа', 'Домашние дела', 'Авто'];
+$tasks = [
+    [
+        'title' => 'Собеседование в IT компании',
+        'date' => '01.06.2018',
+        'category' => 'Работа',
+        'completed' => false
+    ],
+    [
+        'title' => 'Выполнить тестовое задание',
+        'date' => '25.05.2018',
+        'category' => 'Работа',
+        'completed' => false
+    ],
+    [
+        'title' => 'Сделать задание первого раздела',
+        'date' => '21.04.2018',
+        'category' => 'Учеба',
+        'completed' => true
+    ],
+    [
+        'title' => 'Встреча с дрyгом',
+        'date' => '22.04.2018',
+        'category' => 'Входящие',
+        'completed' => false
+    ],
+    [
+        'title' => 'Купить корм для кота',
+        'date' => 'Нет',
+        'category' => 'Домашние дела',
+        'completed' => false
+    ],
+    [
+        'title' => 'Заказать пиццу',
+        'date' => 'Нет',
+        'category' => 'Домашние дела',
+        'completed' => false
+    ]
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,30 +99,12 @@ $days_until_deadline = ($task_deadline_ts - $current_ts) / $seconds_per_day;
 
                 <nav class="main-navigation">
                     <ul class="main-navigation__list">
-                        <li class="main-navigation__list-item">
-                            <a class="main-navigation__list-item-link" href="#">Входящие</a>
-                            <span class="main-navigation__list-item-count">24</span>
-                        </li>
-
-                        <li class="main-navigation__list-item main-navigation__list-item--active">
-                            <a class="main-navigation__list-item-link" href="#">Учеба</a>
-                            <span class="main-navigation__list-item-count">12</span>
-                        </li>
-
-                        <li class="main-navigation__list-item">
-                            <a class="main-navigation__list-item-link" href="#">Здоровье</a>
-                            <span class="main-navigation__list-item-count">3</span>
-                        </li>
-
-                        <li class="main-navigation__list-item">
-                            <a class="main-navigation__list-item-link" href="#">Домашние дела</a>
-                            <span class="main-navigation__list-item-count">7</span>
-                        </li>
-
-                        <li class="main-navigation__list-item">
-                            <a class="main-navigation__list-item-link" href="#">Авто</a>
-                            <span class="main-navigation__list-item-count">0</span>
-                        </li>
+                        <?php foreach ($projects as $key => $value): ?>
+                            <li class="main-navigation__list-item <?= ($key == 0) ? 'main-navigation__list-item--active': ''; ?>">
+                                <a class="main-navigation__list-item-link" href="#"><?=$value; ?></a>
+                                <span class="main-navigation__list-item-count">0</span>
+                            </li>
+                        <?php endforeach; ?>
                     </ul>
                 </nav>
 
@@ -123,57 +145,44 @@ $days_until_deadline = ($task_deadline_ts - $current_ts) / $seconds_per_day;
 
                     <label class="checkbox">
                         <!--добавить сюда аттрибут "checked", если переменная $show_complete_tasks равна единице-->
-                        <input id="show-complete-tasks" class="checkbox__input visually-hidden" type="checkbox" <?php if ($show_complete_tasks == 1) echo "checked"; ?>>
+                        <input id="show-complete-tasks" class="checkbox__input visually-hidden" type="checkbox" <?= ($show_complete_tasks == 1) ? 'checked' : ''; ?>>
                         <span class="checkbox__text">Показывать выполненные</span>
                     </label>
                 </div>
 
                 <table class="tasks">
+                    <?php foreach ($tasks as $key => $value): ?>
+                        <?php if (!$value['completed'] or ($value['completed'] and $show_complete_tasks == 1)): ?>
+                            <tr class="tasks__item task <?= ($value['completed']) ? 'task--completed' : '';?>">
+                                <td class="task__select">
+                                    <label class="checkbox task__checkbox">
+                                        <input class="checkbox__input visually-hidden" type="checkbox" <?= ($value['completed']) ? 'checked' : '';?>>
+                                        <span class="checkbox__text"><?= $value['title']; ?></span>
+                                    </label>
+                                </td>
 
-                    <!--показывать следующий тег <tr/>, если переменная равна единице-->
-                    <?php if ($show_complete_tasks == 1): ?>
-                    <tr class="tasks__item task task--completed">
-                        <td class="task__select">
-                            <label class="checkbox task__checkbox">
-                                <input class="checkbox__input visually-hidden" type="checkbox" checked>
-                                <span class="checkbox__text">Записаться на интенсив "Базовый PHP"</span>
-                            </label>
-                        </td>
-                        <td class="task__date">10.04.2017</td>
+                                <td class="task__date">
+                                    <?=$value['date']; ?>
+                                </td>
 
-                        <td class="task__controls">
-                        </td>
-                    </tr>
-                    <?php endif; ?>
+                                <td class="task__controls">
+                                    <?php if (!$value['completed']): ?>
+                                        <button class="expand-control" type="button" name="button"><?= $value['title']; ?></button>
 
-                    <tr class="tasks__item task <?php if ($days_until_deadline <= 0) echo 'task--important'; ?>">
-                        <td class="task__select">
-                            <label class="checkbox task__checkbox">
-                                <input class="checkbox__input visually-hidden" type="checkbox">
-                                <span class="checkbox__text">Выполнить первое задание</span>
-                            </label>
-                        </td>
+                                        <ul class="expand-list hidden">
+                                            <li class="expand-list__item">
+                                                <a href="#">Выполнить</a>
+                                            </li>
 
-                        <td class="task__date">
-                            <?php echo $date_deadline; ?>
-                        </td>
-
-                        <td class="task__controls">
-                            <button class="expand-control" type="button" name="button">Выполнить первое задание</button>
-
-                            <ul class="expand-list hidden">
-                                <li class="expand-list__item">
-                                    <a href="#">Выполнить</a>
-                                </li>
-
-                                <li class="expand-list__item">
-                                    <a href="#">Удалить</a>
-                                </li>
-                            </ul>
-                        </td>
-                    </tr>
-
-
+                                            <li class="expand-list__item">
+                                                <a href="#">Удалить</a>
+                                            </li>
+                                        </ul>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
                 </table>
             </main>
         </div>
