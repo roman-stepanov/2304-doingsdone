@@ -58,8 +58,27 @@ $tasks = [
 
 require_once('functions.php');
 
-$content = render_template('templates/index.php', ['tasks' => $tasks, 'show_complete_tasks' => $show_complete_tasks]);
-$layout = render_template('templates/layout.php', ['title' => 'Дела в Порядке!', 'projects' => $projects, 'tasks' => $tasks, 'content' => $content]);
+$project = (int)$_GET['project'] ?? 0;
+
+if (array_key_exists($project, $projects)) {
+    $filtered_tasks = filter_tasks($tasks, $projects[$project]);
+} else {
+    http_response_code(404);
+    $filtered_tasks = [];
+}
+
+$content = render_template('templates/index.php', [
+    'tasks' => $filtered_tasks,
+    'show_complete_tasks' => $show_complete_tasks
+]);
+
+$layout = render_template('templates/layout.php', [
+    'title' => 'Дела в Порядке!',
+    'projects' => $projects,
+    'active_project' => $project,
+    'tasks' => $tasks,
+    'content' => $content
+]);
 
 print($layout);
 ?>

@@ -29,4 +29,21 @@ function get_count_tasks($task_list, $project_name) {
     return $result;
 }
 
+function filter_tasks($task_list, $project_name) {
+    $all_projects = 'Все';
+    $result = [];
+
+    if (strtolower($project_name) == strtolower($all_projects)) {
+        $result = $task_list;
+    } else {
+        foreach ($task_list as $key => $value) {
+            if (strtolower($value['category']) == strtolower($project_name)) {
+                array_push($result, $value);
+            }
+        }
+    }
+
+    return $result;
+}
+
 ?>
