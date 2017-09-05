@@ -46,4 +46,12 @@ function filter_tasks($task_list, $project_name) {
     return $result;
 }
 
+function validate_project($value) {
+    return ($value != 0);
+}
+
+function validate_date($value) {
+    return (strtotime($value) && ($value == date("d.m.Y", strtotime($value))));
+}
+
 ?>
