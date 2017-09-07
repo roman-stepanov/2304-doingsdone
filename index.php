@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // показывать или нет выполненные задачи
 $show_complete_tasks = rand(0, 1);
 
@@ -57,73 +59,125 @@ $tasks = [
 ];
 
 require_once('functions.php');
+require_once('userdata.php');
 
 $content_data = [
     'tasks' => [],
-    'show_complete_tasks' => $show_complete_tasks
+    'show_complete_tasks' => true
 ];
 
-$modal_data = [
-    'required' => ['name', 'project', 'date'],
-    'rules' => [
-        'project' => 'validate_project',
-        'date' => 'validate_date'
-    ],
+$new_task_data = [
     'errors' => [],
     'projects' => $projects
 ];
 
+$login_data = [
+    'errors' => []
+];
+
 $layout_data = [
     'title' => 'Дела в Порядке!',
-    'projects' => $projects,
+    'user' => false,
+    'projects' => [],
     'active_project' => 0,
     'tasks' => [],
     'content' => '',
-    'modal' => ''
+    'modal' => false
 ];
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    foreach ($_POST as $key => $value) {
-        if (in_array($key, $modal_data['required']) && $value == '') {
-            $modal_data['errors'][] = $key;
-        }
+if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 
-        if (array_key_exists($key, $modal_data['rules']) && !call_user_func($modal_data['rules'][$key], $value)) {
-            $modal_data['errors'][] = $key;
-        }
-    }
-
-    if (!count($modal_data['errors'])) {
-        $new_task = [
-            'title' => $_POST['name'],
-            'date' => $_POST['date'],
-            'category' => $projects[$_POST['project']],
-            'completed' => false
+    if (isset($_POST['task'])) {
+        $required  = ['name', 'project', 'date'];
+        $rules = [
+            'project' => 'validate_project',
+            'date' => 'validate_date'
         ];
-        array_unshift($tasks, $new_task);
 
-        if (isset($_FILES['preview'])) {
-            $file_path = __DIR__ . '\\';
-            $file_name = $_FILES['preview']['name'];
-            $file_tmp_name = $_FILES['preview']['tmp_name'];
-            move_uploaded_file($file_tmp_name, $file_path . $file_name);
+        foreach ($_POST as $key => $value) {
+            if (in_array($key, $required) && $value == '') {
+                $new_task_data['errors'][] = $key;
+            }
+
+            if (array_key_exists($key, $rules) && !call_user_func($rules[$key], $value)) {
+                $new_task_data['errors'][] = $key;
+            }
+        }
+
+        if (!count($new_task_data['errors'])) {
+            $new_task = [
+                'title' => $_POST['name'],
+                'date' => $_POST['date'],
+                'category' => $projects[$_POST['project']],
+                'completed' => false
+            ];
+            array_unshift($tasks, $new_task);
+
+            if (isset($_FILES['preview'])) {
+                $file_path = __DIR__ . '\\';
+                $file_name = $_FILES['preview']['name'];
+                $file_tmp_name = $_FILES['preview']['tmp_name'];
+                move_uploaded_file($file_tmp_name, $file_path . $file_name);
+            }
+        }
+    }
+
+    if (isset($_POST['login'])) {
+        $required  = ['email', 'password'];
+        $rules = [
+            'email' => 'validate_email'
+        ];
+
+        foreach($_POST as $key => $value) {
+            if (in_array($key, $required) && $value == '') {
+                $login_data['errors'][] = $key;
+            }
+
+            if (array_key_exists($key, $rules) && !call_user_func($rules[$key], $value)) {
+                $login_data['errors'][] = $key;
+            }
+        }
+
+        if (!count($login_data['errors'])) {
+            $email = $_POST['email'];
+            $password = $_POST['password'];
+            $user = search_user_by_email($email, $users);
+
+            if ($user && password_verify($password, $user['password'])) {
+                $_SESSION['user'] = $user;
+                header("Location: /index.php");
+            } else {
+                $login_data['errors'][] = 'password';
+            }
         }
     }
 }
 
-$project = (int)$_GET['project'] ?? 0;
-if (array_key_exists($project, $projects)) {
-    $content_data['tasks'] = filter_tasks($tasks, $projects[$project]);
+if (isset($_SESSION['user'])) {
+    $project = (int)$_GET['project'] ?? 0;
+    if (array_key_exists($project, $projects)) {
+        $content_data['tasks'] = filter_tasks($tasks, $projects[$project]);
+    } else {
+        http_response_code(404);
+    }
+    $content_data['show_complete_tasks'] = $_GET['show_completed'] ?? $show_complete_tasks;
+
+    $layout_data['user'] = $_SESSION['user'];
+    $layout_data['projects'] = $projects;
+    $layout_data['active_project'] = $project;
+    $layout_data['tasks'] = $tasks;
+    $layout_data['content'] = render_template('templates/index.php', $content_data);
+
+    if (isset($_GET['add']) || count($new_task_data['errors'])) {
+        $new_task_data['projects'] = $projects;
+        $layout_data['modal'] = render_template('templates/new-task.php', $new_task_data);
+    }
 } else {
-    http_response_code(404);
-}
+    $layout_data['content'] = render_template('templates/guest.php', []);
 
-$layout_data['active_project'] = $project;
-$layout_data['tasks'] = $tasks;
-$layout_data['content'] = render_template('templates/index.php', $content_data);
-
-if (isset($_GET['add']) || count($modal_data['errors'])) {
-    $layout_data['modal'] = render_template('templates/modal.php', $modal_data);
+    if (isset($_GET['login']) || count($login_data['errors'])) {
+        $layout_data['modal'] = render_template('templates/login.php', $login_data);
+    }
 }
 
 $layout = render_template('templates/layout.php', $layout_data);

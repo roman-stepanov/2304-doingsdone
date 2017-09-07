@@ -12,7 +12,7 @@ $date = $_POST['date'] ?? '';
             <label class="form__label" for="name">Название <sup>*</sup></label>
             <input class="form__input  <?= in_array('name', $data['errors']) ? 'form__input--error' : ''; ?>" type="text" name="name" id="name" value="<?= $name; ?>" placeholder="Введите название">
             <?php if (in_array('name', $data['errors'])): ?>
-                <span class="form__error">Заполните это поле</span>
+                <span class="form__message">Заполните это поле</span>
             <?php endif; ?>
         </div>
         <div class="form__row">
@@ -23,14 +23,14 @@ $date = $_POST['date'] ?? '';
                 <?php endforeach; ?>
             </select>
             <?php if (in_array('project', $data['errors'])): ?>
-                <span class="form__error">Выберите проект</span>
+                <span class="form__message">Выберите проект</span>
             <?php endif; ?>
         </div>
         <div class="form__row">
             <label class="form__label" for="date">Дата выполнения <sup>*</sup></label>
             <input class="form__input form__input--date  <?= in_array('date', $data['errors']) ? 'form__input--error' : ''; ?>" type="text" name="date" id="date" value="<?= $date; ?>" placeholder="Введите дату в формате ДД.ММ.ГГГГ">
             <?php if (in_array('date', $data['errors'])): ?>
-                <span class="form__error">Заполните дату в правильном формате (ДД.ММ.ГГГГ)</span>
+                <span class="form__message">Заполните дату в правильном формате (ДД.ММ.ГГГГ)</span>
             <?php endif; ?>
         </div>
         <div class="form__row">
@@ -43,7 +43,7 @@ $date = $_POST['date'] ?? '';
             </div>
         </div>
         <div class="form__row form__row--controls">
-            <input class="button" type="submit" name="" value="Добавить">
+            <input class="button" type="submit" name="task" value="Добавить">
         </div>
     </form>
 </div>
