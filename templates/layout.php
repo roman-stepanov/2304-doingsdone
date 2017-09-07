@@ -8,50 +8,56 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body <?= $data['modal'] ? 'class="overlay"' : ''; ?>>
+<body class="<?= !$data['user'] ? 'body-background' : ''; ?> <?= $data['modal'] ? 'overlay' : ''; ?>">
 <h1 class="visually-hidden">Дела в порядке</h1>
 
 <div class="page-wrapper">
-    <div class="container container--with-sidebar">
+    <div class="container <?= $data['user'] ? 'container--with-sidebar' : ''; ?>">
         <header class="main-header">
             <a href="#">
                 <img src="img/logo.png" width="153" height="42" alt="Логитип Дела в порядке">
             </a>
 
             <div class="main-header__side">
-                <a class="main-header__side-item button button--plus" href="/index.php?add">Добавить задачу</a>
+                <?php if ($data['user']): ?>
+                    <a class="main-header__side-item button button--plus" href="/index.php?add">Добавить задачу</a>
 
-                <div class="main-header__side-item user-menu">
-                    <div class="user-menu__image">
-                        <img src="img/user-pic.jpg" width="40" height="40" alt="Пользователь">
+                    <div class="main-header__side-item user-menu">
+                        <div class="user-menu__image">
+                            <img src="img/user-pic.jpg" width="40" height="40" alt="Пользователь">
+                        </div>
+
+                        <div class="user-menu__data">
+                            <p><?= htmlspecialchars($data['user']['name']); ?></p>
+
+                            <a href="logout.php">Выйти</a>
+                        </div>
                     </div>
-
-                    <div class="user-menu__data">
-                        <p>Константин</p>
-
-                        <a href="#">Выйти</a>
-                    </div>
-                </div>
+                <?php else: ?>
+                    <a class="main-header__side-item button button--transparent" href="/index.php?login">Войти</a>
+                <?php endif; ?>
             </div>
         </header>
 
         <div class="content">
-            <section class="content__side">
-                <h2 class="content__side-heading">Проекты</h2>
+            <?php if ($data['user']): ?>
+                <section class="content__side">
+                    <h2 class="content__side-heading">Проекты</h2>
 
-                <nav class="main-navigation">
-                    <ul class="main-navigation__list">
-                        <?php foreach ($data['projects'] as $key => $value): ?>
-                            <li class="main-navigation__list-item <?= ($key == $data['active_project']) ? 'main-navigation__list-item--active': ''; ?>">
-                                <a class="main-navigation__list-item-link" href="/index.php?project=<?= $key; ?>"><?= htmlspecialchars($value); ?></a>
-                                <span class="main-navigation__list-item-count"><?= get_count_tasks($data['tasks'], $value); ?></span>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </nav>
+                    <nav class="main-navigation">
+                        <ul class="main-navigation__list">
+                            <?php foreach ($data['projects'] as $key => $value): ?>
+                                <li class="main-navigation__list-item <?= ($key == $data['active_project']) ? 'main-navigation__list-item--active': ''; ?>">
+                                    <a class="main-navigation__list-item-link" href="/index.php?project=<?= $key; ?>"><?= htmlspecialchars($value); ?></a>
+                                    <span class="main-navigation__list-item-count"><?= get_count_tasks($data['tasks'], $value); ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </nav>
 
-                <a class="button button--transparent button--plus content__side-button" href="#">Добавить проект</a>
-            </section>
+                    <a class="button button--transparent button--plus content__side-button" href="#">Добавить проект</a>
+                </section>
+            <?php endif; ?>
 
             <main class="content__main">
                 <?=$data['content']; ?>
@@ -68,7 +74,7 @@
             <p>Веб-приложение для удобного ведения списка дел.</p>
         </div>
 
-        <a class="main-footer__button button button--plus" href="/index.php?add">Добавить задачу</a>
+        <a class="main-footer__button button button--plus" href="/index.php<?= ($data['user']) ? '?add' : '?login'; ?> ">Добавить задачу</a>
 
         <div class="main-footer__social social">
             <span class="visually-hidden">Мы в соцсетях:</span>

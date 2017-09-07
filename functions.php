@@ -54,4 +54,21 @@ function validate_date($value) {
     return (strtotime($value) && ($value == date("d.m.Y", strtotime($value))));
 }
 
+function validate_email($value) {
+    return filter_var($value, FILTER_VALIDATE_EMAIL);
+}
+
+function search_user_by_email ($email, $users) {
+    $result = null;
+
+    foreach ($users as $user) {
+        if ($user['email'] == $email) {
+            $result = $user;
+            break;
+        }
+    }
+
+    return $result;
+}
+
 ?>
