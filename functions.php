@@ -71,4 +71,37 @@ function search_user_by_email ($email, $users) {
     return $result;
 }
 
+function select_data($connect, $sql, $data = []) {
+    $result = [];
+
+    $stmt = db_get_prepare_stmt($connect, $sql, $data);
+    if ($stmt && mysqli_stmt_execute($stmt)) {
+        $result = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    }
+
+    return $result;
+}
+
+function insert_data($connect, $table, $data) {
+    $result = false;
+
+    $columns = array_keys($data);
+    $values = array_values($data);
+    $placeholders = array_fill(0, count($values), '?');
+
+    $sql = 'INSERT INTO ' . $table . ' (' . implode(', ', $columns) .') VALUES (' . implode(', ', $placeholders) .')';
+
+    $stmt = db_get_prepare_stmt($connect, $sql, $values);
+    if ($stmt && mysqli_stmt_execute($stmt)) {
+        $result = mysqli_insert_id($connect);
+    }
+
+    return $result;
+}
+
+function exec_query($connect, $sql, $data = []) {
+    $stmt = db_get_prepare_stmt($connect, $sql, $data);
+
+    return ($stmt && mysqli_stmt_execute($stmt));
+}
 ?>
