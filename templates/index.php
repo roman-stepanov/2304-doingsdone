@@ -42,26 +42,27 @@
             <tr class="tasks__item task <?= ($value['completed']) ? 'task--completed' : '';?>">
                 <td class="task__select">
                     <label class="checkbox task__checkbox">
-                        <input class="checkbox__input visually-hidden" type="checkbox" <?= ($value['completed']) ? 'checked' : '';?>>
-                        <span class="checkbox__text"><?= htmlspecialchars($value['title']); ?></span>
+                        <input class="checkbox__input visually-hidden" type="checkbox" <?= ($value['completed']) ? 'checked' : '';?> disabled>
+                        <span class="checkbox__text"><?= htmlspecialchars($value['name']); ?></span>
                     </label>
                 </td>
 
                 <td class="task__date">
-                    <?= ($value['date']) ? htmlspecialchars($value['date']) : 'Нет'; ?>
+                    <?= ($value['deadline']) ? htmlspecialchars(date('d.m.Y', strtotime($value['deadline']))) : 'Нет'; ?>
+
                 </td>
 
                 <td class="task__controls">
                     <?php if (!$value['completed']): ?>
-                        <button class="expand-control" type="button" name="button"><?= htmlspecialchars($value['title']); ?></button>
+                        <button class="expand-control" type="button" name="button"><?= htmlspecialchars($value['name']); ?></button>
 
                         <ul class="expand-list hidden">
                             <li class="expand-list__item">
-                                <a href="#">Выполнить</a>
+                                <a href="/index.php?complete_task=<?= $value['id']; ?>">Выполнить</a>
                             </li>
 
                             <li class="expand-list__item">
-                                <a href="#">Удалить</a>
+                                <a href="/index.php?delete_task=<?= $value['id']; ?>">Удалить</a>
                             </li>
                         </ul>
                     <?php endif; ?>

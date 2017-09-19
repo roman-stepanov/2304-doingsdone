@@ -1,84 +1,39 @@
 <?php
 session_start();
 
-// показывать или нет выполненные задачи
-$show_complete_tasks = rand(0, 1);
-
 // устанавливаем часовой пояс в Московское время
 date_default_timezone_set('Europe/Moscow');
-
-$days = rand(-3, 3);
-$task_deadline_ts = strtotime("+" . $days . " day midnight"); // метка времени даты выполнения задачи
-$current_ts = strtotime('now midnight'); // текущая метка времени
-
-// запишите сюда дату выполнения задачи в формате дд.мм.гггг
-$date_deadline = date("d.m.Y", $task_deadline_ts);
-
-$seconds_per_day = 86400;
-// в эту переменную запишите кол-во дней до даты задачи
-$days_until_deadline = ($task_deadline_ts - $current_ts) / $seconds_per_day;
-
-$projects = ['Все', 'Входящие', 'Учеба', 'Работа', 'Домашние дела', 'Авто'];
-$tasks = [
-    [
-        'title' => 'Собеседование в IT компании',
-        'date' => '01.06.2018',
-        'category' => 'Работа',
-        'completed' => false
-    ],
-    [
-        'title' => 'Выполнить тестовое задание',
-        'date' => '25.05.2018',
-        'category' => 'Работа',
-        'completed' => false
-    ],
-    [
-        'title' => 'Сделать задание первого раздела',
-        'date' => '21.04.2018',
-        'category' => 'Учеба',
-        'completed' => true
-    ],
-    [
-        'title' => 'Встреча с дрyгом',
-        'date' => '22.04.2018',
-        'category' => 'Входящие',
-        'completed' => false
-    ],
-    [
-        'title' => 'Купить корм для кота',
-        'date' => false,
-        'category' => 'Домашние дела',
-        'completed' => false
-    ],
-    [
-        'title' => 'Заказать пиццу',
-        'date' => false,
-        'category' => 'Домашние дела',
-        'completed' => false
-    ]
-];
 
 require_once('functions.php');
 require_once('mysql_helper.php');
 require_once('init.php');
-require_once('userdata.php');
 
 $content_data = [
     'tasks' => [],
     'show_complete_tasks' => false
 ];
 
+$register_data = [
+    'required' => ['email', 'password', 'name'],
+    'errors' => []
+];
+
 $new_task_data = [
+    'required' => ['name', 'project', 'date'],
     'errors' => [],
-    'projects' => $projects
+    'projects' => []
 ];
 
 $login_data = [
+    'required' => ['email', 'password'],
     'errors' => []
 ];
 
 $layout_data = [
     'title' => 'Дела в Порядке!',
+    'body-background' => false,
+    'page-header' => true,
+    'sidebar' => false,
     'user' => false,
     'projects' => [],
     'active_project' => 0,
@@ -89,76 +44,106 @@ $layout_data = [
 
 if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 
-    if (isset($_POST['task'])) {
-        $required  = ['name', 'project', 'date'];
-        $rules = [
-            'project' => 'validate_project',
-            'date' => 'validate_date'
-        ];
-
-        foreach ($_POST as $key => $value) {
-            if (in_array($key, $required) && $value == '') {
-                $new_task_data['errors'][] = $key;
+    if (isset($_POST['new-task']) && isset($_SESSION['user'])) {
+        foreach($_POST as $key => $value) {
+            if (in_array($key, $new_task_data['required']) && $value == '') {
+                $new_task_data['errors'][$key] = 'Заполните это поле';
             }
+        }
 
-            if (array_key_exists($key, $rules) && !call_user_func($rules[$key], $value)) {
-                $new_task_data['errors'][] = $key;
-            }
+        if (!validate_project($_POST['project'])) {
+            $new_task_data['errors']['project'] = 'Веберите проект';
+        }
+
+        if (!validate_date($_POST['date'])) {
+            $new_task_data['errors']['date'] = 'Дата должна быть в формате ДД.ММ.ГГГГ и больше либо равна текущей датe';
         }
 
         if (!count($new_task_data['errors'])) {
             $new_task = [
-                'title' => $_POST['name'],
-                'date' => $_POST['date'],
-                'category' => $projects[$_POST['project']],
-                'completed' => false
+                'created' => date('Y-m-d'),
+                'name' => $_POST['name'],
+                'file_name' => null,
+                'deadline' => date('Y-m-d', strtotime($_POST['date'])),
+                'project_id' => (int)$_POST['project'],
+                'user_id' => $_SESSION['user']['id']
             ];
-            array_unshift($tasks, $new_task);
 
             if (isset($_FILES['preview'])) {
                 $file_path = __DIR__ . '\\';
                 $file_name = $_FILES['preview']['name'];
                 $file_tmp_name = $_FILES['preview']['tmp_name'];
                 move_uploaded_file($file_tmp_name, $file_path . $file_name);
+                $new_task['file_name'] = $file_name;
             }
+
+            insert_data($connect, 'tasks', $new_task);
+            header("Location: /index.php");
+        }
+    }
+
+    if (isset($_POST['register'])) {
+        foreach($_POST as $key => $value) {
+            if (in_array($key, $register_data['required']) && $value == '') {
+                $register_data['errors'][$key] = 'Заполните это поле';
+            }
+        }
+
+        if (!validate_email($_POST['email'])) {
+            $register_data['errors']['email'] = 'E-mail введён некорректно';
+        } else {
+            if (select_data($connect, 'SELECT * FROM users WHERE email = ?', [$_POST['email']])) {
+                $register_data['errors']['email'] = 'E-mail уже зарегистрирован';
+            }
+        }
+
+        if (!count($register_data['errors'])) {
+            $new_user = [
+                'registration' => date('Y-m-d'),
+                'email' => $_POST['email'],
+                'name' => $_POST['name'],
+                'password' => password_hash($_POST['password'], PASSWORD_DEFAULT)
+            ];
+            insert_data($connect, 'users', $new_user);
+            $_SESSION['register_complete'] = true;
+            header("Location: /index.php?login");
         }
     }
 
     if (isset($_POST['login'])) {
-        $required  = ['email', 'password'];
-        $rules = [
-            'email' => 'validate_email'
-        ];
-
         foreach($_POST as $key => $value) {
-            if (in_array($key, $required) && $value == '') {
-                $login_data['errors'][] = $key;
+            if (in_array($key, $login_data['required']) && $value == '') {
+                $login_data['errors'][$key] = 'Заполните это поле';
             }
+        }
 
-            if (array_key_exists($key, $rules) && !call_user_func($rules[$key], $value)) {
-                $login_data['errors'][] = $key;
-            }
+        if (!validate_email($_POST['email'])) {
+            $login_data['errors']['email'] = 'E-mail введён некорректно';
         }
 
         if (!count($login_data['errors'])) {
             $email = $_POST['email'];
             $password = $_POST['password'];
-            $user = search_user_by_email($email, $users);
+            $user = current(select_data($connect, 'SELECT * FROM users WHERE email = ?', [$email]));
 
             if ($user && password_verify($password, $user['password'])) {
                 $_SESSION['user'] = $user;
                 header("Location: /index.php");
             } else {
-                $login_data['errors'][] = 'password';
+                $login_data['errors']['message'] = 'Вы ввели неверный email/пароль';
             }
         }
     }
 }
 
 if (isset($_SESSION['user'])) {
+    $projects = select_data($connect, 'SELECT id, name FROM projects WHERE user_id = ? ORDER BY id', [$_SESSION['user']['id']]);
+    array_unshift($projects, ['id' => 0, 'name' => 'Все' ]);
+    $tasks = select_data($connect, 'SELECT * FROM tasks WHERE user_id = ?', [$_SESSION['user']['id']]);
+
     $project = (int)$_GET['project'] ?? 0;
-    if (array_key_exists($project, $projects)) {
-        $content_data['tasks'] = filter_tasks($tasks, $projects[$project]);
+    if (in_array($project, array_column($projects, 'id'))) {
+        $content_data['tasks'] = filter_tasks($tasks, $project);
     } else {
         http_response_code(404);
     }
@@ -171,6 +156,7 @@ if (isset($_SESSION['user'])) {
         $content_data['show_complete_tasks'] = true;
     }
 
+    $layout_data['sidebar'] = true;
     $layout_data['user'] = $_SESSION['user'];
     $layout_data['projects'] = $projects;
     $layout_data['active_project'] = $project;
@@ -181,10 +167,38 @@ if (isset($_SESSION['user'])) {
         $new_task_data['projects'] = $projects;
         $layout_data['modal'] = render_template('templates/new-task.php', $new_task_data);
     }
+
+    if (isset($_GET['complete_task'])) {
+        $task_id = $_GET['complete_task'];
+        $sql = 'UPDATE tasks SET completed = CURDATE() WHERE id = ?';
+        if (exec_query($connect, $sql, [$task_id])) {
+            header("Location: /index.php");
+        }
+    }
+
+    if (isset($_GET['delete_task'])) {
+        $task_id = $_GET['delete_task'];
+        $sql = 'DELETE FROM tasks WHERE id = ?';
+        if (exec_query($connect, $sql, [$task_id])) {
+            header("Location: /index.php");
+        }
+    }
 } else {
-    $layout_data['content'] = render_template('templates/guest.php', []);
+    $layout_data['body-background'] = true;
+    $layout_data['content'] = render_template('templates/guest.php');
+
+    if (isset($_GET['register']) || count($register_data['errors'])) {
+        $layout_data['body-background'] = false;
+        $layout_data['page-header'] = false;
+        $layout_data['sidebar'] = true;
+        $layout_data['content'] = render_template('templates/register.php', $register_data);
+    }
 
     if (isset($_GET['login']) || count($login_data['errors'])) {
+        if (isset($_SESSION['register_complete'])) {
+            $login_data['errors']['message'] = 'Теперь вы можете войти, используя свой email и пароль';
+            unset($_SESSION['register_complete']);
+        }
         $layout_data['modal'] = render_template('templates/login.php', $login_data);
     }
 }
