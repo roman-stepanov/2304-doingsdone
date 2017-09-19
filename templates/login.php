@@ -8,16 +8,16 @@ $email = $_POST['email'] ?? '';
     <form class="form" action="index.php" method="post">
         <div class="form__row">
             <label class="form__label" for="email">E-mail <sup>*</sup></label>
-            <input class="form__input <?= in_array('email', $data['errors']) ? 'form__input--error' : ''; ?>" type="text" name="email" id="email" value="<?= htmlspecialchars($email); ?>" placeholder="Введите e-mail">
-            <?php if (in_array('email', $data['errors'])): ?>
-                <p class="form__message">E-mail введён некорректно</p>
+            <input class="form__input <?= isset($data['errors']['email']) ? 'form__input--error' : ''; ?>" type="text" name="email" id="email" value="<?= htmlspecialchars($email); ?>" placeholder="Введите e-mail">
+            <?php if (isset($data['errors']['email'])): ?>
+                <p class="form__message"><?= $data['errors']['email']; ?></p>
             <?php endif; ?>
         </div>
         <div class="form__row">
             <label class="form__label" for="password">Пароль <sup>*</sup></label>
-            <input class="form__input <?= in_array('password', $data['errors']) ? 'form__input--error' : ''; ?>" type="password" name="password" id="password" value="" placeholder="Введите пароль">
-            <?php if (in_array('password', $data['errors'])): ?>
-                <p class="form__message">Неверный пароль</p>
+            <input class="form__input <?= isset($data['errors']['password']) ? 'form__input--error' : ''; ?>" type="password" name="password" id="password" value="" placeholder="Введите пароль">
+            <?php if (isset($data['errors']['password'])): ?>
+                <p class="form__message"><?= $data['errors']['password']; ?></p>
             <?php endif; ?>
         </div>
         <div class="form__row">
@@ -27,6 +27,7 @@ $email = $_POST['email'] ?? '';
             </label>
         </div>
         <div class="form__row form__row--controls">
+            <p class="error-massage"><?= $data['errors']['message']; ?></p>
             <input class="button" type="submit" name="login" value="Войти">
         </div>
     </form>

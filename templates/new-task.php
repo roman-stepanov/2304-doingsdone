@@ -10,27 +10,27 @@ $date = $_POST['date'] ?? '';
     <form class="form" action="index.php" method="post" enctype="multipart/form-data">
         <div class="form__row">
             <label class="form__label" for="name">Название <sup>*</sup></label>
-            <input class="form__input  <?= in_array('name', $data['errors']) ? 'form__input--error' : ''; ?>" type="text" name="name" id="name" value="<?= $name; ?>" placeholder="Введите название">
-            <?php if (in_array('name', $data['errors'])): ?>
-                <span class="form__message">Заполните это поле</span>
+            <input class="form__input  <?= isset($data['errors']['name']) ? 'form__input--error' : ''; ?>" type="text" name="name" id="name" value="<?= $name; ?>" placeholder="Введите название">
+            <?php if (isset($data['errors']['name'])): ?>
+                <p class="form__message"><?= $data['errors']['name']; ?></p>
             <?php endif; ?>
         </div>
         <div class="form__row">
             <label class="form__label" for="project">Проект <sup>*</sup></label>
-            <select class="form__input form__input--select  <?= in_array('project', $data['errors']) ? 'form__input--error' : ''; ?>" name="project" id="project">
+            <select class="form__input form__input--select  <?= isset($data['errors']['project']) ? 'form__input--error' : ''; ?>" name="project" id="project">
                 <?php foreach ($data['projects'] as $key => $value): ?>
-                    <option value="<?= $key; ?>" <?= ($key == $project) ? 'selected' : ''; ?>><?= $value; ?></option>
+                    <option value="<?= $value['id']; ?>" <?= ($value['id'] == $project) ? 'selected' : ''; ?>><?= $value['name']; ?></option>
                 <?php endforeach; ?>
             </select>
-            <?php if (in_array('project', $data['errors'])): ?>
-                <span class="form__message">Выберите проект</span>
+            <?php if (isset($data['errors']['project'])): ?>
+                <p class="form__message"><?= $data['errors']['project']; ?></p>
             <?php endif; ?>
         </div>
         <div class="form__row">
             <label class="form__label" for="date">Дата выполнения <sup>*</sup></label>
-            <input class="form__input form__input--date  <?= in_array('date', $data['errors']) ? 'form__input--error' : ''; ?>" type="text" name="date" id="date" value="<?= $date; ?>" placeholder="Введите дату в формате ДД.ММ.ГГГГ">
-            <?php if (in_array('date', $data['errors'])): ?>
-                <span class="form__message">Заполните дату в правильном формате (ДД.ММ.ГГГГ)</span>
+            <input class="form__input form__input--date  <?= isset($data['errors']['date']) ? 'form__input--error' : ''; ?>" type="text" name="date" id="date" value="<?= $date; ?>" placeholder="Введите дату в формате ДД.ММ.ГГГГ">
+            <?php if (isset($data['errors']['date'])): ?>
+                <p class="form__message"><?= $data['errors']['date']; ?></p>
             <?php endif; ?>
         </div>
         <div class="form__row">
@@ -43,7 +43,7 @@ $date = $_POST['date'] ?? '';
             </div>
         </div>
         <div class="form__row form__row--controls">
-            <input class="button" type="submit" name="task" value="Добавить">
+            <input class="button" type="submit" name="new-task" value="Добавить">
         </div>
     </form>
 </div>
