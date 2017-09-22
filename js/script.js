@@ -25,3 +25,24 @@ if ($checkbox) {
     window.location = '/index.php?show_completed=' + is_checked;
   });
 }
+
+var tasks = document.querySelector('.tasks');
+if (tasks) {
+  var checkboxes = tasks.querySelectorAll('.checkbox__input');
+
+  [].forEach.call(checkboxes, function(item) {
+    item.addEventListener('change', function(event) {
+      var isComplete = +item.checked;
+      var taskId = item.getAttribute('data-task');
+
+      window.location = '/index.php?task=' + taskId + '&complete=' + isComplete;
+    });
+  });
+}
+
+var btnModalClose = document.querySelector('.modal__close');
+if (btnModalClose) {
+  btnModalClose.addEventListener('click', function(event) {
+    window.location = '/index.php';
+  });
+}

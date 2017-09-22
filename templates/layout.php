@@ -50,13 +50,13 @@
                                 <?php foreach ($data['projects'] as $key => $value): ?>
                                     <li class="main-navigation__list-item <?= ($value['id'] == $data['active_project']) ? 'main-navigation__list-item--active': ''; ?>">
                                         <a class="main-navigation__list-item-link" href="/index.php?project=<?= $value['id']; ?>"><?= htmlspecialchars($value['name']); ?></a>
-                                        <span class="main-navigation__list-item-count"><?= get_count_tasks($data['tasks'], $value['id']); ?></span>
+                                        <span class="main-navigation__list-item-count"><?= $value['count_tasks']; ?></span>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
                         </nav>
 
-                        <a class="button button--transparent button--plus content__side-button" href="#">Добавить проект</a>
+                        <a class="button button--transparent button--plus content__side-button" href="/index.php?new_project">Добавить проект</a>
                     <?php else: ?>
                         <p class="content__side-info">Если у вас уже есть аккаунт, авторизуйтесь на сайте</p>
                         <a class="button button--transparent content__side-button" href="/index.php?login">Войти</a>

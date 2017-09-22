@@ -43,6 +43,9 @@ $date = $_POST['date'] ?? '';
             </div>
         </div>
         <div class="form__row form__row--controls">
+            <?php if (count($data['errors'])): ?>
+                <p class="error-massage">Пожалуйста, исправьте ошибки в форме</p>
+            <?php endif; ?>
             <input class="button" type="submit" name="new-task" value="Добавить">
         </div>
     </form>

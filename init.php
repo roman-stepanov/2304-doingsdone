@@ -6,4 +6,3 @@ if ($connect == false) {
     print($error);
     exit();
 }
-?>
