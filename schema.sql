@@ -13,11 +13,11 @@ CREATE TABLE projects (
 
 CREATE TABLE tasks (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  created DATE NOT NULL,
-  completed DATE,
+  created DATETIME NOT NULL,
+  completed DATETIME,
   name CHAR(255) NOT NULL,
   file_name CHAR(255),
-  deadline DATE,
+  deadline DATETIME,
   project_id INT NOT NULL,
   user_id INT NOT NULL,
 

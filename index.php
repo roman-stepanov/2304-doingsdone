@@ -9,12 +9,20 @@ require_once('mysql_helper.php');
 require_once('init.php');
 
 $content_data = [
-    'tasks' => [],
-    'show_complete_tasks' => false
+    'search' => '',
+    'active_project' => 0,
+    'deadline' => false,
+    'show_complete_tasks' => false,
+    'tasks' => []
 ];
 
 $register_data = [
     'required' => ['email', 'password', 'name'],
+    'errors' => []
+];
+
+$new_project_data = [
+    'required' => ['name'],
     'errors' => []
 ];
 
@@ -37,12 +45,33 @@ $layout_data = [
     'user' => false,
     'projects' => [],
     'active_project' => 0,
-    'tasks' => [],
     'content' => '',
     'modal' => false
 ];
 
 if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
+
+    if (isset($_POST['new-project']) && isset($_SESSION['user'])) {
+        foreach($_POST as $key => $value) {
+            if (in_array($key, $new_project_data['required']) && $value == '') {
+                $new_project_data['errors'][$key] = 'Заполните это поле';
+            }
+        }
+
+        if (get_project($connect, $_SESSION['user']['id'], $_POST['name'])) {
+            $new_project_data['errors']['name'] = 'Такой проект уже существует';
+        }
+
+        if (!count($new_project_data['errors'])) {
+            $new_project = [
+                'name' => $_POST['name'],
+                'user_id' => $_SESSION['user']['id']
+            ];
+
+            insert_data($connect, 'projects', $new_project);
+            header('Location: /index.php');
+        }
+    }
 
     if (isset($_POST['new-task']) && isset($_SESSION['user'])) {
         foreach($_POST as $key => $value) {
@@ -51,20 +80,23 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
             }
         }
 
-        if (!validate_project($_POST['project'])) {
-            $new_task_data['errors']['project'] = 'Веберите проект';
+        if ($_POST['project'] && !get_project_by_id($connect, $_POST['project'])) {
+            $new_task_data['errors']['project'] = 'Проект не существует';
         }
 
-        if (!validate_date($_POST['date'])) {
-            $new_task_data['errors']['date'] = 'Дата должна быть в формате ДД.ММ.ГГГГ и больше либо равна текущей датe';
+        $new_task_deadline = strtotime(convert_human_date($_POST['date']));
+        if (!$new_task_deadline) {
+            $new_task_data['errors']['date'] = 'Неверный формат даты';
+        } elseif ($new_task_deadline < strtotime(date('d.m.Y'))) {
+            $new_task_data['errors']['date'] = 'Дата должна быть больше либо равна текущей датe';
         }
 
         if (!count($new_task_data['errors'])) {
             $new_task = [
-                'created' => date('Y-m-d'),
+                'created' => date('Y-m-d H:i'),
                 'name' => $_POST['name'],
                 'file_name' => null,
-                'deadline' => date('Y-m-d', strtotime($_POST['date'])),
+                'deadline' => date('Y-m-d H:i', $new_task_deadline),
                 'project_id' => (int)$_POST['project'],
                 'user_id' => $_SESSION['user']['id']
             ];
@@ -78,7 +110,14 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
             }
 
             insert_data($connect, 'tasks', $new_task);
-            header("Location: /index.php");
+            header('Location: /index.php');
+        }
+    }
+
+    if (isset($_POST['search_string']) && isset($_SESSION['user'])) {
+        $search = trim($_POST['search_string']);
+        if ($search) {
+            $content_data['search'] = $search;
         }
     }
 
@@ -106,7 +145,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
             ];
             insert_data($connect, 'users', $new_user);
             $_SESSION['register_complete'] = true;
-            header("Location: /index.php?login");
+            header('Location: /index.php?login');
         }
     }
 
@@ -128,29 +167,58 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 
             if ($user && password_verify($password, $user['password'])) {
                 $_SESSION['user'] = $user;
-                header("Location: /index.php");
+                header('Location: /index.php');
             } else {
                 $login_data['errors']['message'] = 'Вы ввели неверный email/пароль';
             }
+        } else {
+            $login_data['errors']['message'] = 'Пожалуйста, исправьте ошибки в форме';
         }
     }
 }
 
 if (isset($_SESSION['user'])) {
-    $projects = select_data($connect, 'SELECT id, name FROM projects WHERE user_id = ? ORDER BY id', [$_SESSION['user']['id']]);
-    array_unshift($projects, ['id' => 0, 'name' => 'Все' ]);
-    $tasks = select_data($connect, 'SELECT * FROM tasks WHERE user_id = ?', [$_SESSION['user']['id']]);
+    $projects = get_list_projects($connect, $_SESSION['user']['id']);
 
     $project = (int)$_GET['project'] ?? 0;
+    $deadline = (int)$_GET['deadline'] ?? 0;
+
     if (in_array($project, array_column($projects, 'id'))) {
-        $content_data['tasks'] = filter_tasks($tasks, $project);
+        $sql = 'SELECT *, DATE_FORMAT(deadline, "%d.%m.%Y") AS deadline_format FROM tasks WHERE user_id = ?';
+        $sql_params[] = $_SESSION['user']['id'];
+
+        if ($project) {
+            $sql .= ' AND project_id = ?';
+            $sql_params[] = $project;
+        }
+
+        if ($content_data['search']) {
+            $sql .= ' AND name LIKE ?';
+            $sql_params[] = '%' . $content_data['search'] . '%';
+        }
+
+        switch ($deadline) {
+            case 1:
+                $sql .= ' AND DATE(deadline) = CURDATE()';
+                break;
+            case 2:
+                $sql .= ' AND DATE(deadline) = CURDATE() + INTERVAL 1 DAY';
+                break;
+            case 3:
+                $sql .= ' AND completed IS NULL AND DATE(deadline) < CURDATE()';
+                break;
+        }
+
+        $content_data['active_project'] = $project;
+        $content_data['deadline'] = $deadline;
+        $content_data['tasks'] = select_data($connect, $sql, $sql_params);
     } else {
         http_response_code(404);
     }
 
     if (isset($_GET['show_completed'])) {
         setcookie('show_completed', $_GET['show_completed'], strtotime('+3 days'), '/');
-        header("Location: /index.php");
+        header('Location: /index.php');
     }
     if (isset($_COOKIE['show_completed']) && ($_COOKIE['show_completed'] == 1)) {
         $content_data['show_complete_tasks'] = true;
@@ -160,27 +228,38 @@ if (isset($_SESSION['user'])) {
     $layout_data['user'] = $_SESSION['user'];
     $layout_data['projects'] = $projects;
     $layout_data['active_project'] = $project;
-    $layout_data['tasks'] = $tasks;
     $layout_data['content'] = render_template('templates/index.php', $content_data);
 
+    if (isset($_GET['new_project']) || count($new_project_data['errors'])) {
+        $layout_data['modal'] = render_template('templates/new-project.php', $new_project_data);
+    }
+
     if (isset($_GET['add']) || count($new_task_data['errors'])) {
+        array_shift($projects);
+        array_unshift($projects, [
+            'id' => '',
+            'name' => '<Выберите проект>'
+        ]);
         $new_task_data['projects'] = $projects;
         $layout_data['modal'] = render_template('templates/new-task.php', $new_task_data);
     }
 
-    if (isset($_GET['complete_task'])) {
-        $task_id = $_GET['complete_task'];
-        $sql = 'UPDATE tasks SET completed = CURDATE() WHERE id = ?';
-        if (exec_query($connect, $sql, [$task_id])) {
-            header("Location: /index.php");
-        }
-    }
+    if (isset($_GET['task'])) {
+        $task_id = (int)$_GET['task'];
+        $sql = '';
 
-    if (isset($_GET['delete_task'])) {
-        $task_id = $_GET['delete_task'];
-        $sql = 'DELETE FROM tasks WHERE id = ?';
-        if (exec_query($connect, $sql, [$task_id])) {
-            header("Location: /index.php");
+        if (isset($_GET['complete'])) {
+            $sql = 'UPDATE tasks SET completed = ';
+            $sql .= ($_GET['complete']) ?  'CURRENT_TIMESTAMP()' : 'NULL';
+            $sql .= ' WHERE id = ?';
+        }
+
+        if (isset($_GET['delete'])) {
+            $sql = 'DELETE FROM tasks WHERE id = ?';
+        }
+
+        if ($sql && exec_query($connect, $sql, [$task_id])) {
+            header('Location: /index.php');
         }
     }
 } else {
@@ -206,4 +285,3 @@ if (isset($_SESSION['user'])) {
 $layout = render_template('templates/layout.php', $layout_data);
 
 print($layout);
-?>
