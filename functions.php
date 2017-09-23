@@ -3,7 +3,7 @@
 /**
  * Подключает шаблон и передает в него данные
  *
- * @param $template string Путь к файлу шаблона
+ * @param string $template Путь к файлу шаблона
  * @param array $data Данные для шаблона
  *
  * @return string HTML-код шаблона с подставленными данными
@@ -23,7 +23,7 @@ function render_template($template, $data = []) {
 /**
  * Определяет просрочена дата задачи или нет
  *
- * @param $date string Дата задачи
+ * @param string $date Дата задачи
  *
  * @return boolean Результат выполнения
  */
@@ -43,21 +43,65 @@ function is_date_expired($date) {
 /**
  * Переводит дату задчи из "человеческого формата" в относительный формат
  *
- * @param $date string Дата задачи
+ * @param string $date Дата задачи
  *
  * @return string Дата в относительном формате
  */
 function convert_human_date($date) {
-    $patterns = ['/сегодня/', '/после/', '/завтра/', '/ в /', '/понедельник/', '/вторник/', '/среда/', '/четверг/', '/пятница/', '/суббота/', '/воскресенье/'];
-    $replacements = ['today', '+1 day', '+1 day', ' ', 'next monday', 'next tuesday', 'next wednesday', 'next thursday', 'next friday', 'next saturday', 'next sunday'];
+    $patterns = [
+        '/сегодня/',
+        '/после/',
+        '/завтра/',
+        '/ в /',
+        '/понедельник/',
+        '/вторник/',
+        '/среда/',
+        '/четверг/',
+        '/пятница/',
+        '/суббота/',
+        '/воскресенье/'
+    ];
+    $replacements = [
+        'today',
+        '+1 day',
+        '+1 day',
+        ' ',
+        'next monday',
+        'next tuesday',
+        'next wednesday',
+        'next thursday',
+        'next friday',
+        'next saturday',
+        'next sunday'
+    ];
 
     return preg_replace($patterns, $replacements, mb_strtolower($date));
 }
 
 /**
+ * Проверяет обязательные поля формы отправленные через POST
+ *
+ * @param array $post массив $_POST
+ * @param array $required Массив с именами полей для проверки
+ *
+ * @return array Массив с именами полей, которые не прошли проверку
+ */
+function check_required_fields($post, $required) {
+    $result = [];
+
+    foreach($post as $key => $value) {
+        if (in_array($key, $required) && $value == '') {
+            $result[$key] = 'Заполните это поле';
+        }
+    }
+
+    return $result;
+}
+
+/**
  * Проверяет, что значение является корректным e-mail
  *
- * @param $email string Email пользователя
+ * @param string $email Email пользователя
  *
  * @return string Email
  */
@@ -68,8 +112,8 @@ function validate_email($email) {
 /**
  * Получение данных из БД
  *
- * @param $connect mysqli Ресурс соединения
- * @param $sql string SQL запрос с плейсхолдерами вместо значений
+ * @param mysqli $connect Ресурс соединения
+ * @param string $sql SQL запрос с плейсхолдерами вместо значений
  * @param array $data Данные для вставки на место плейсхолдеров
  *
  * @return array Массив с данными
@@ -88,8 +132,8 @@ function select_data($connect, $sql, $data = []) {
 /**
  * Вставка данных в таблицу БД
  *
- * @param $connect mysqli Ресурс соединения
- * @param $sql string Имя таблицы, в которую добавляются данные
+ * @param mysqli $connect Ресурс соединения
+ * @param string $sql Имя таблицы, в которую добавляются данные
  * @param array $data Ассоциативный массив, где ключи - имена полей, а значения - значения полей таблицы
  *
  * @return integer Идентификатор последней добавленной записи
@@ -114,8 +158,8 @@ function insert_data($connect, $table, $data) {
 /**
  * Выполняет произвольный запрос БД
  *
- * @param $connect mysqli Ресурс соединения
- * @param $sql string SQL запрос с плейсхолдерами вместо значений
+ * @param mysqli $connect Ресурс соединения
+ * @param string $sql SQL запрос с плейсхолдерами вместо значений
  * @param array $data Данные для вставки на место плейсхолдеров
  *
  * @return boolean Результат выполнения запроса
@@ -129,8 +173,8 @@ function exec_query($connect, $sql, $data = []) {
 /**
  * Получение списка проектов пользователя со счетчиками задач
  *
- * @param $connect mysqli Ресурс соединения
- * @param $user_id integer Идентификатор пользователя
+ * @param mysqli $connect Ресурс соединения
+ * @param integer $user_id  Идентификатор пользователя
  *
  * @return array Массив с названиеми проектов и колиеством задач
  */
@@ -163,9 +207,9 @@ function get_list_projects($connect, $user_id) {
 /**
  * Находит проект пользователя по названию
  *
- * @param $connect mysqli Ресурс соединения
- * @param $user_id integer Идентификатор пользователя
- * @param $project_name string Название проекта
+ * @param mysqli $connect Ресурс соединения
+ * @param integer $user_id Идентификатор пользователя
+ * @param string $project_name Название проекта
  *
  * @return array Данные о проекте
  */
@@ -179,8 +223,8 @@ function get_project($connect, $user_id, $project_name) {
 /**
  * Находит проект по идентификатору
  *
- * @param $connect mysqli Ресурс соединения
- * @param $user_id integer Идентификатор проекта
+ * @param mysqli $connect Ресурс соединения
+ * @param integer $user_id Идентификатор проекта
  *
  * @return array Данные о проекте
  */

@@ -4,10 +4,10 @@ session_start();
 // устанавливаем часовой пояс в Московское время
 date_default_timezone_set('Europe/Moscow');
 
-require_once('vendor/autoload.php');
-require_once('functions.php');
-require_once('mysql_helper.php');
-require_once('init.php');
+require_once 'vendor/autoload.php';
+require_once 'functions.php';
+require_once 'mysql_helper.php';
+require_once 'init.php';
 
 $content_data = [
     'search' => '',
@@ -53,11 +53,7 @@ $layout_data = [
 if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 
     if (isset($_POST['new-project']) && isset($_SESSION['user'])) {
-        foreach($_POST as $key => $value) {
-            if (in_array($key, $new_project_data['required']) && $value == '') {
-                $new_project_data['errors'][$key] = 'Заполните это поле';
-            }
-        }
+        $new_project_data['errors'] = check_required_fields($_POST, $new_project_data['required']);
 
         if (get_project($connect, $_SESSION['user']['id'], $_POST['name'])) {
             $new_project_data['errors']['name'] = 'Такой проект уже существует';
@@ -75,11 +71,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
     }
 
     if (isset($_POST['new-task']) && isset($_SESSION['user'])) {
-        foreach($_POST as $key => $value) {
-            if (in_array($key, $new_task_data['required']) && $value == '') {
-                $new_task_data['errors'][$key] = 'Заполните это поле';
-            }
-        }
+        $new_task_data['errors'] = check_required_fields($_POST, $new_task_data['required']);
 
         if ($_POST['project'] && !get_project_by_id($connect, $_POST['project'])) {
             $new_task_data['errors']['project'] = 'Проект не существует';
@@ -115,19 +107,8 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
         }
     }
 
-    if (isset($_POST['search_string']) && isset($_SESSION['user'])) {
-        $search = trim($_POST['search_string']);
-        if ($search) {
-            $content_data['search'] = $search;
-        }
-    }
-
     if (isset($_POST['register'])) {
-        foreach($_POST as $key => $value) {
-            if (in_array($key, $register_data['required']) && $value == '') {
-                $register_data['errors'][$key] = 'Заполните это поле';
-            }
-        }
+        $register_data['errors'] = check_required_fields($_POST, $register_data['required']);
 
         if (!validate_email($_POST['email'])) {
             $register_data['errors']['email'] = 'E-mail введён некорректно';
@@ -151,11 +132,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
     }
 
     if (isset($_POST['login'])) {
-        foreach($_POST as $key => $value) {
-            if (in_array($key, $login_data['required']) && $value == '') {
-                $login_data['errors'][$key] = 'Заполните это поле';
-            }
-        }
+        $login_data['errors'] = check_required_fields($_POST, $login_data['required']);
 
         if (!validate_email($_POST['email'])) {
             $login_data['errors']['email'] = 'E-mail введён некорректно';
@@ -181,6 +158,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 if (isset($_SESSION['user'])) {
     $projects = get_list_projects($connect, $_SESSION['user']['id']);
 
+    $search = trim($_GET['search']) ?? '';
     $project = (int)$_GET['project'] ?? 0;
     $deadline = (int)$_GET['deadline'] ?? 0;
 
@@ -193,9 +171,9 @@ if (isset($_SESSION['user'])) {
             $sql_params[] = $project;
         }
 
-        if ($content_data['search']) {
+        if ($search) {
             $sql .= ' AND name LIKE ?';
-            $sql_params[] = '%' . $content_data['search'] . '%';
+            $sql_params[] = '%' . $search . '%';
         }
 
         switch ($deadline) {
@@ -210,6 +188,7 @@ if (isset($_SESSION['user'])) {
                 break;
         }
 
+        $content_data['search'] = $search;
         $content_data['active_project'] = $project;
         $content_data['deadline'] = $deadline;
         $content_data['tasks'] = select_data($connect, $sql, $sql_params);
