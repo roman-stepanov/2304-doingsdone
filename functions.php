@@ -1,4 +1,5 @@
 <?php
+require_once 'mysql_helper.php';
 
 /**
  * Подключает шаблон и передает в него данные
@@ -197,7 +198,7 @@ function get_list_projects($connect, $user_id) {
         array_unshift($result, [
             'id' => 0,
             'name' => 'Все',
-            'count_tasks' => $count_all_tasks[0]['count_tasks'] ? $count_all_tasks[0]['count_tasks'] : 0
+            'count_tasks' => $count_all_tasks ? $count_all_tasks[0]['count_tasks'] : 0
         ]);
     }
 

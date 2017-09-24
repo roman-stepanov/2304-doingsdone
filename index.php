@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ALL);
 session_start();
 
 // устанавливаем часовой пояс в Московское время
@@ -158,9 +159,9 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
 if (isset($_SESSION['user'])) {
     $projects = get_list_projects($connect, $_SESSION['user']['id']);
 
-    $search = trim($_GET['search']) ?? '';
-    $project = (int)$_GET['project'] ?? 0;
-    $deadline = (int)$_GET['deadline'] ?? 0;
+    $search = $_GET['search'] ?? '';
+    $project = $_GET['project'] ?? 0;
+    $deadline = $_GET['deadline'] ?? 0;
 
     if (in_array($project, array_column($projects, 'id'))) {
         $sql = 'SELECT *, DATE_FORMAT(deadline, "%d.%m.%Y") AS deadline_format FROM tasks WHERE user_id = ?';
@@ -171,6 +172,7 @@ if (isset($_SESSION['user'])) {
             $sql_params[] = $project;
         }
 
+        $search = trim($search);
         if ($search) {
             $sql .= ' AND name LIKE ?';
             $sql_params[] = '%' . $search . '%';
@@ -189,8 +191,8 @@ if (isset($_SESSION['user'])) {
         }
 
         $content_data['search'] = $search;
-        $content_data['active_project'] = $project;
-        $content_data['deadline'] = $deadline;
+        $content_data['active_project'] = (int)$project;
+        $content_data['deadline'] = (int)$deadline;
         $content_data['tasks'] = select_data($connect, $sql, $sql_params);
     } else {
         http_response_code(404);
