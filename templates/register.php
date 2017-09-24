@@ -1,6 +1,6 @@
 <?php
-$email = $_POST['email'];
-$name = $_POST['name'];
+$email = $_POST['email'] ?? '';
+$name = $_POST['name'] ?? '';
 ?>
 
 <h2 class="content__main-heading">Регистрация аккаунта</h2>
