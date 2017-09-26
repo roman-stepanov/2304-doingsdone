@@ -51,9 +51,9 @@ $layout_data = [
     'modal' => false
 ];
 
-if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
+if (($_SERVER['REQUEST_METHOD'] === 'POST') && !empty($_POST)) {
 
-    if (isset($_POST['new-project']) && isset($_SESSION['user'])) {
+    if (isset($_POST['new-project']) && isset($_SESSION['user']['id'])) {
         $new_project_data['errors'] = check_required_fields($_POST, $new_project_data['required']);
 
         if (get_project($connect, $_SESSION['user']['id'], $_POST['name'])) {
@@ -71,7 +71,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
         }
     }
 
-    if (isset($_POST['new-task']) && isset($_SESSION['user'])) {
+    if (isset($_POST['new-task']) && isset($_SESSION['user']['id'])) {
         $new_task_data['errors'] = check_required_fields($_POST, $new_task_data['required']);
 
         if ($_POST['project'] && !get_project_by_id($connect, $_POST['project'])) {
@@ -156,7 +156,7 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST') && !empty($_POST)) {
     }
 }
 
-if (isset($_SESSION['user'])) {
+if (isset($_SESSION['user']['id'])) {
     $projects = get_list_projects($connect, $_SESSION['user']['id']);
 
     $search = $_GET['search'] ?? '';
@@ -202,14 +202,14 @@ if (isset($_SESSION['user'])) {
         setcookie('show_completed', $_GET['show_completed'], strtotime('+3 days'), '/');
         header('Location: /index.php');
     }
-    if (isset($_COOKIE['show_completed']) && ($_COOKIE['show_completed'] == 1)) {
+    if (isset($_COOKIE['show_completed']) && ($_COOKIE['show_completed'] === '1')) {
         $content_data['show_complete_tasks'] = true;
     }
 
     $layout_data['sidebar'] = true;
     $layout_data['user'] = $_SESSION['user'];
     $layout_data['projects'] = $projects;
-    $layout_data['active_project'] = $project;
+    $layout_data['active_project'] = (int)$project;
     $layout_data['content'] = render_template('templates/index.php', $content_data);
 
     if (isset($_GET['new_project']) || count($new_project_data['errors'])) {

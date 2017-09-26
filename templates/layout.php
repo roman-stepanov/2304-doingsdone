@@ -48,7 +48,7 @@
                         <nav class="main-navigation">
                             <ul class="main-navigation__list">
                                 <?php foreach ($data['projects'] as $key => $value): ?>
-                                    <li class="main-navigation__list-item <?= ($value['id'] == $data['active_project']) ? 'main-navigation__list-item--active': ''; ?>">
+                                    <li class="main-navigation__list-item <?= ($value['id'] === $data['active_project']) ? 'main-navigation__list-item--active': ''; ?>">
                                         <a class="main-navigation__list-item-link" href="/index.php?project=<?= $value['id']; ?>"><?= htmlspecialchars($value['name']); ?></a>
                                         <span class="main-navigation__list-item-count"><?= $value['count_tasks']; ?></span>
                                     </li>
