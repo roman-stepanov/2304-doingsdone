@@ -1,6 +1,6 @@
 <?php
 $name = $_POST['name'] ?? '';
-$project = $_POST['project'] ?? 0;
+$project = (int)$_POST['project'] ?? 0;
 $date = $_POST['date'] ?? '';
 ?>
 
@@ -19,7 +19,7 @@ $date = $_POST['date'] ?? '';
             <label class="form__label" for="project">Проект <sup>*</sup></label>
             <select class="form__input form__input--select  <?= isset($data['errors']['project']) ? 'form__input--error' : ''; ?>" name="project" id="project">
                 <?php foreach ($data['projects'] as $key => $value): ?>
-                    <option value="<?= $value['id']; ?>" <?= ($value['id'] == $project) ? 'selected' : ''; ?>><?= $value['name']; ?></option>
+                    <option value="<?= $value['id']; ?>" <?= ($value['id'] === $project) ? 'selected' : ''; ?>><?= $value['name']; ?></option>
                 <?php endforeach; ?>
             </select>
             <?php if (isset($data['errors']['project'])): ?>

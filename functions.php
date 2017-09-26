@@ -91,7 +91,7 @@ function check_required_fields($post, $required) {
     $result = [];
 
     foreach($post as $key => $value) {
-        if (in_array($key, $required) && $value == '') {
+        if (in_array($key, $required) && $value === '') {
             $result[$key] = 'Заполните это поле';
         }
     }
